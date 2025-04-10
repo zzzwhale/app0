@@ -90,6 +90,14 @@ public class CalendarItemViewModel extends AndroidViewModel {
         repository.insertMoodEntry(year, month, day, mood, notes);
     }
 
+    public void updateCalendarItem(CalendarItem item) {
+        repository.update(item);
+    }
+
+    public void deleteCalendarItem(CalendarItem item) {
+        repository.delete(item);
+    }
+
     public List<CalendarItem> getAllCalendarItemsSync() {
         final List<CalendarItem>[] result = new List[1];
         executorService.execute(() -> {

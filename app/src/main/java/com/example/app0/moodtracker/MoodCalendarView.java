@@ -147,7 +147,11 @@ public class MoodCalendarView extends LinearLayout {
             return notes;
         }
     }
-
+    public void removeMoodEntry(int year, int month, int day) {
+        String dateKey = getDateKey(year, month, day);
+        moodEntries.remove(dateKey);
+        updateCalendar();
+    }
     // Helper method to create consistent date keys
     private String getDateKey(int year, int month, int day) {
         return String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, day);
@@ -187,6 +191,7 @@ public class MoodCalendarView extends LinearLayout {
             this.context = context;
             this.inflater = LayoutInflater.from(context);
         }
+
 
         public void updateCalendar(Calendar calendar, Map<String, MoodEntry> moodEntries) {
             cells.clear();

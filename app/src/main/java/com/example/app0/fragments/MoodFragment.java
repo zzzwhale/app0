@@ -12,24 +12,25 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.app0.R;
 import com.example.app0.database.CalendarItem;
 import com.example.app0.database.Mood;
-import com.example.app0.moodtracker.MoodCalendarView;
 import com.example.app0.database.CalendarItemViewModel;
+import com.example.app0.moodtracker.MoodCalendarView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 
 public class MoodFragment extends Fragment {
     private CalendarItemViewModel moodViewModel;
-    // change this to calendarviewmodel is code works
     private MoodCalendarView moodCalendar;
     private LinearLayout moodDetailsContainer;
     private TextView selectedDateText;
@@ -43,9 +44,15 @@ public class MoodFragment extends Fragment {
     private EditText notesInput;
     private Button saveButton;
 
+    // Edit and Delete buttons
+    private Button updateButton;
+    private Button deleteButton;
+
     // Currently selected date
     private int selectedYear, selectedMonth, selectedDay;
     private int selectedMoodResId;
+    // Flag to track if we're editing or creating new
+    private boolean isEditMode = false;
 
     @Nullable
     @Override
@@ -77,6 +84,32 @@ public class MoodFragment extends Fragment {
         notesInput = moodDialog.findViewById(R.id.notes_input);
         saveButton = moodDialog.findViewById(R.id.done_button);
 
+        // Create and add the update and delete buttons
+        LinearLayout buttonLayout = new LinearLayout(requireContext());
+        buttonLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
+
+        // Create Update Button
+        updateButton = new Button(requireContext());
+        updateButton.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
+        updateButton.setText("Edit");
+
+        // Create Delete Button
+        deleteButton = new Button(requireContext());
+        deleteButton.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
+        deleteButton.setText("Delete");
+
+        // Add buttons to layout
+        buttonLayout.addView(updateButton);
+        buttonLayout.addView(deleteButton);
+
+        // Add button layout to moodDetailsContainer
+        moodDetailsContainer.addView(buttonLayout);
+
         // Set up mood selection in dialog
         setupMoodSelectionListeners();
 
@@ -84,7 +117,30 @@ public class MoodFragment extends Fragment {
         closeMoodDialog.setOnClickListener(v -> moodDialog.setVisibility(View.GONE));
 
         // Set up save button
-        saveButton.setOnClickListener(v -> saveMoodEntry());
+        saveButton.setOnClickListener(v -> {
+            if (isEditMode) {
+                updateMoodEntry();
+            } else {
+                saveMoodEntry();
+            }
+        });
+
+        // Set up edit button listener
+        updateButton.setOnClickListener(v -> {
+            MoodCalendarView.MoodEntry currentEntry = moodCalendar.getMoodEntry(
+                    selectedYear, selectedMonth, selectedDay);
+
+            if (currentEntry != null) {
+                isEditMode = true;
+                showMoodDialogForEdit(selectedYear, selectedMonth, selectedDay,
+                        currentEntry.getMoodResId(), currentEntry.getNotes());
+            }
+        });
+
+        // Set up delete button listener
+        deleteButton.setOnClickListener(v -> {
+            showDeleteConfirmationDialog();
+        });
 
         // Set up the calendar date selection listener
         moodCalendar.setOnDateSelectedListener((year, month, day, moodEntry) -> {
@@ -94,6 +150,9 @@ public class MoodFragment extends Fragment {
 
             // Update ViewModel with selected date
             moodViewModel.setSelectedDate(year, month, day);
+
+            // Reset edit mode flag for new selections
+            isEditMode = false;
 
             // Show mood details if exists
             if (moodEntry != null) {
@@ -174,6 +233,9 @@ public class MoodFragment extends Fragment {
         resetMoodSelection();
         notesInput.setText("");
 
+        // Update dialog title/button text for new entry
+        saveButton.setText("Save");
+
         // Format and display the date
         Calendar calendar = Calendar.getInstance();
         calendar.set(year, month, day);
@@ -183,6 +245,48 @@ public class MoodFragment extends Fragment {
         // Hide details and show dialog
         moodDetailsContainer.setVisibility(View.GONE);
         moodDialog.setVisibility(View.VISIBLE);
+    }
+
+    private void showMoodDialogForEdit(int year, int month, int day, int moodResId, String existingNotes) {
+        // Reset dialog state first
+        resetMoodSelection();
+
+        // Pre-select the current mood
+        selectMoodInDialog(moodResId);
+
+        // Pre-fill notes
+        notesInput.setText(existingNotes);
+
+        // Update dialog title/button text for editing
+        saveButton.setText("Update");
+
+        // Format and display the date
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month, day);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
+        String formattedDate = dateFormat.format(calendar.getTime());
+
+        // Hide details and show dialog
+        moodDetailsContainer.setVisibility(View.GONE);
+        moodDialog.setVisibility(View.VISIBLE);
+    }
+
+    private void selectMoodInDialog(int moodResId) {
+        // Select the correct mood icon based on resource ID
+        if (moodResId == R.drawable.mood_very_sad) {
+            moodVerySad.setSelected(true);
+        } else if (moodResId == R.drawable.mood_sad) {
+            moodSad.setSelected(true);
+        } else if (moodResId == R.drawable.mood_neutral) {
+            moodNeutral.setSelected(true);
+        } else if (moodResId == R.drawable.mood_happy) {
+            moodHappy.setSelected(true);
+        } else if (moodResId == R.drawable.mood_very_happy) {
+            moodVeryHappy.setSelected(true);
+        }
+
+        // Save the selected resource ID
+        selectedMoodResId = moodResId;
     }
 
     private void showMoodDetails(int year, int month, int day, MoodCalendarView.MoodEntry moodEntry) {
@@ -227,5 +331,86 @@ public class MoodFragment extends Fragment {
         // Update UI immediately
         moodCalendar.setMoodEntry(selectedYear, selectedMonth, selectedDay, selectedMoodResId, notes);
         showMoodDetails(selectedYear, selectedMonth, selectedDay, entry);
+    }
+
+    private void updateMoodEntry() {
+        if (selectedMoodResId == 0) {
+            // No mood selected, show error or select default
+            selectedMoodResId = R.drawable.mood_neutral;
+        }
+
+        String notes = notesInput.getText().toString().trim();
+
+        // Create date for the entry
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(selectedYear, selectedMonth, selectedDay);
+        Date date = calendar.getTime();
+
+        // Create CalendarItem
+        Mood mood = Mood.fromResId(selectedMoodResId);
+        CalendarItem updatedItem = new CalendarItem(date, mood, notes);
+
+        // Update mood via ViewModel
+        moodViewModel.updateCalendarItem(updatedItem);
+
+        // Close dialog and show details
+        moodDialog.setVisibility(View.GONE);
+        isEditMode = false;
+
+        // Create a temporary entry to display until the LiveData updates
+        MoodCalendarView.MoodEntry entry = new MoodCalendarView.MoodEntry(
+                String.format(Locale.US, "%04d-%02d-%02d",
+                        selectedYear, selectedMonth + 1, selectedDay),
+                selectedMoodResId,
+                notes
+        );
+
+        // Update UI immediately
+        moodCalendar.setMoodEntry(selectedYear, selectedMonth, selectedDay, selectedMoodResId, notes);
+        showMoodDetails(selectedYear, selectedMonth, selectedDay, entry);
+    }
+
+    private void showDeleteConfirmationDialog() {
+        // Create AlertDialog for confirmation
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Delete Mood Entry");
+        builder.setMessage("Are you sure you want to delete this mood entry?");
+
+        // Add buttons
+        builder.setPositiveButton("Delete", (dialog, which) -> {
+            deleteMoodEntry();
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        builder.create().show();
+    }
+
+    private void deleteMoodEntry() {
+        // Create a CalendarItem to delete
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(selectedYear, selectedMonth, selectedDay);
+        Date date = calendar.getTime();
+
+        // Get the current entry to delete
+        MoodCalendarView.MoodEntry entry = moodCalendar.getMoodEntry(selectedYear, selectedMonth, selectedDay);
+        if (entry != null) {
+            // Convert MoodResId to Mood enum
+            Mood mood = Mood.fromResId(entry.getMoodResId());
+
+            // Create a CalendarItem for deletion
+            CalendarItem itemToDelete = new CalendarItem(date, mood, entry.getNotes());
+
+            // Delete from repository via ViewModel
+            moodViewModel.deleteCalendarItem(itemToDelete);
+
+            // Update UI
+            moodCalendar.removeMoodEntry(selectedYear, selectedMonth, selectedDay);
+
+            // Hide details container
+            moodDetailsContainer.setVisibility(View.GONE);
+        }
     }
 }
