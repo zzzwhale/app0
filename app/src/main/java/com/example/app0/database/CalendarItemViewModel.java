@@ -22,7 +22,7 @@ public class CalendarItemViewModel extends AndroidViewModel {
     private final LiveData<List<CalendarItem>> allCalendarItems;
     private final ExecutorService executorService;
 
-    // Selected date information
+    // Hold the data & gets updated in the UI
     private final MutableLiveData<Integer> selectedYear = new MutableLiveData<>();
     private final MutableLiveData<Integer> selectedMonth = new MutableLiveData<>();
     private final MutableLiveData<Integer> selectedDay = new MutableLiveData<>();
@@ -40,21 +40,26 @@ public class CalendarItemViewModel extends AndroidViewModel {
         selectedDay.setValue(calendar.get(Calendar.DAY_OF_MONTH));
     }
 
+
     public LiveData<List<CalendarItem>> getAllCalendarItems() {
         return allCalendarItems;
     }
 
+    // fetch mood with calendar
     public LiveData<CalendarItem> getSelectedDateMood() {
         Integer year = selectedYear.getValue();
         Integer month = selectedMonth.getValue();
         Integer day = selectedDay.getValue();
 
+        // no mood
         if (year == null || month == null || day == null) {
             return new MutableLiveData<>(null);
         }
 
+        // return if there is mood
         return repository.getCalendarItemByDate(year, month, day);
     }
+
 
     public void setSelectedDate(int year, int month, int day) {
         selectedYear.setValue(year);
@@ -62,6 +67,7 @@ public class CalendarItemViewModel extends AndroidViewModel {
         selectedDay.setValue(day);
     }
 
+    // use for display calender data
     public LiveData<Integer> getSelectedYear() {
         return selectedYear;
     }
@@ -79,6 +85,7 @@ public class CalendarItemViewModel extends AndroidViewModel {
         Integer month = selectedMonth.getValue();
         Integer day = selectedDay.getValue();
 
+        // select nothing for calendar
         if (year == null || month == null || day == null) {
             return;
         }
@@ -96,7 +103,7 @@ public class CalendarItemViewModel extends AndroidViewModel {
             result[0] = repository.getAllCalendarItemsSync();
         });
 
-        // Wait for result (not ideal, but simple for now)
+
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {

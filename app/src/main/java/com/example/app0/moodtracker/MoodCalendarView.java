@@ -153,7 +153,7 @@ public class MoodCalendarView extends LinearLayout {
         return String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, day);
     }
 
-    // Update calendar with database items
+
     // Update calendar with database items
     public void updateWithCalendarItems(List<CalendarItem> items) {
         moodEntries.clear();

@@ -14,12 +14,15 @@ public class Converters {
 
     @TypeConverter
     public static Date fromTimestamp(String value) {
+        // TextUtils is used to check for null, will not cause NullPointerException unlike using value.isEmpty()
         if (TextUtils.isEmpty(value)) {
             return null;
         }
         try {
+            // get yyyy-mm-dd format in String -> Date
             return DATE_FORMAT.parse(value);
         } catch (ParseException e) {
+            // wrong format
             e.printStackTrace();
             return null;
         }
@@ -30,14 +33,17 @@ public class Converters {
         if (date == null) {
             return null;
         }
+        // Convert Date in Date to String
         return DATE_FORMAT.format(date);
     }
 
+    // Convert Mood into String
     @TypeConverter
     public static String fromMood(Mood mood) {
         return mood == null ? null : mood.name();
     }
 
+    // Convert String back to Mood
     @TypeConverter
     public static Mood toMood(String name) {
         if (TextUtils.isEmpty(name)) {
@@ -46,6 +52,7 @@ public class Converters {
         try {
             return Mood.valueOf(name);
         } catch (IllegalArgumentException e) {
+            // Invalid String for mood
             e.printStackTrace();
             return Mood.NEUTRAL;
         }

@@ -177,6 +177,7 @@ public class MoodFragment extends Fragment {
         // Format and display the date
         Calendar calendar = Calendar.getInstance();
         calendar.set(year, month, day);
+        // full month name: January, d = 29, yyyy = 2020
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
         String formattedDate = dateFormat.format(calendar.getTime());
 

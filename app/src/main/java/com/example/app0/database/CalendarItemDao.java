@@ -14,6 +14,7 @@ import java.util.List;
 @Dao
 public interface CalendarItemDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // same key? -> replace the old one
     void insertCalendarItem(CalendarItem item);
 
     @Update
@@ -30,6 +31,8 @@ public interface CalendarItemDao {
 
     @Query("SELECT * FROM calendarItems WHERE date = :date")
     CalendarItem getCalendarItemByDate(String date);
+
+    // date is like 2004-10-28
 
     @Query("SELECT * FROM calendarItems WHERE date = :date")
     LiveData<CalendarItem> getCalendarItemByDateLive(String date);

@@ -24,12 +24,17 @@ public class CalendarItemRepository {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
     public CalendarItemRepository(Application application) {
+        // create database
         CalendarItemDatabase database = CalendarItemDatabase.getInstance(application);
+        // call database method: reference to DAO
         calendarItemDao = database.getCalendarItemDao();
+        // use DAO to get all data, Live automatically updates the app when there are changes
         allCalendarItems = calendarItemDao.getAllCalendarItemsLive();
+        // manage background activities
         executorService = Executors.newSingleThreadExecutor();
     }
 
+    // methods from DAO
     public LiveData<List<CalendarItem>> getAllCalendarItems() {
         return allCalendarItems;
     }
@@ -40,6 +45,7 @@ public class CalendarItemRepository {
         return calendarItemDao.getCalendarItemByDateLive(dateString);
     }
 
+    // background threads
     public void insert(CalendarItem calendarItem) {
         executorService.execute(() -> calendarItemDao.insertCalendarItem(calendarItem));
     }
@@ -52,15 +58,6 @@ public class CalendarItemRepository {
         executorService.execute(() -> calendarItemDao.deleteCalendarItem(calendarItem));
     }
 
-    public Date createDate(int year, int month, int day) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, day);
-        return calendar.getTime();
-    }
-
-    public String formatDate(Date date) {
-        return DATE_FORMAT.format(date);
-    }
 
     public void insertMoodEntry(int year, int month, int day, Mood mood, String notes) {
         // Create date (month is 0-based in Calendar)
