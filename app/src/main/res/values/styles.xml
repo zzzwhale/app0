@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MonthYearPickerTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="colorAccent">@color/white</item>
+        <item name="android:datePickerStyle">@style/MonthYearPickerStyle</item>
+    </style>
+
+    <style name="MonthYearPickerStyle" parent="android:Widget.Material.DatePicker">
+        <item name="android:calendarViewShown">false</item>
+        <item name="android:datePickerMode">spinner</item>
+    </style>
+
+</resources>
